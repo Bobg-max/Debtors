@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student Dashboard - Tshiamo Tutors</title>
+  <link rel="stylesheet" href="Style/dashboard.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- HEADER -->
+    <header>
+      <h1>Student Dashboard</h1>
+      <p id="current-date"></p>
+      <div id="header-student-name"></div>
+    </header>
+
+    <!-- PROFILE -->
+    <section class="profile">
+      <h2>Profile</h2>
+      <p><strong>Name:</strong> <span id="profile-full-name"></span></p>
+      <p><strong>Grade:</strong> <span id="profile-grade"></span></p>
+      <p><strong>ID:</strong> <span id="profile-student-id"></span></p>
+      <p><strong>Email:</strong> <span id="profile-email"></span></p>
+      <p><strong>Phone:</strong> <span id="profile-phone"></span></p>
+      <p><strong>Address:</strong> <span id="profile-address"></span></p>
+      <p><strong>GPA:</strong> <span id="profile-gpa"></span></p>
+      <p><strong>Total Credits:</strong> <span id="profile-credits"></span></p>
+      <button onclick="openProfileModal()">Edit Profile</button>
+    </section>
+
+    <!-- TODAY'S SCHEDULE -->
+    <section>
+      <h2>Today's Schedule</h2>
+      <div id="todays-schedule"></div>
+      <button onclick="openAddClassModal()">Add Class</button>
+    </section>
+
+    <!-- WEEKLY CALENDAR -->
+    <section>
+      <h2>Weekly Calendar</h2>
+      <div id="weekly-calendar"></div>
+    </section>
+
+    <!-- ATTENDANCE -->
+    <section>
+      <h2>Attendance</h2>
+      <div id="course-attendance"></div>
+      <button onclick="markAttendance()">Mark Attendance</button>
+      <button onclick="viewReports()">View Reports</button>
+    </section>
+
+    <!-- NOTIFICATIONS -->
+    <section>
+      <h2>Notifications</h2>
+      <div id="notifications-list"></div>
+    </section>
+
+    <!-- ACHIEVEMENTS -->
+    <section>
+      <h2>Achievements</h2>
+      <div id="achievements-list"></div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section>
+      <h2>Settings</h2>
+      <button onclick="openSettingsModal()">Open Settings</button>
+    </section>
+  </div>
+
+  <!-- MODALS -->
+
+  <!-- Add Class Modal -->
+  <div id="add-class-modal" class="modal">
+    <div class="modal-content">
+      <h2>Add Class</h2>
+      <input id="course-name" placeholder="Course Name" />
+      <input id="instructor" placeholder="Instructor" />
+      <input id="location" placeholder="Location" />
+      <select id="day">
+        <option value="">Select Day</option>
+        <option value="monday">Monday</option>
+        <option value="tuesday">Tuesday</option>
+        <option value="wednesday">Wednesday</option>
+        <option value="thursday">Thursday</option>
+        <option value="friday">Friday</option>
+      </select>
+      <input id="start-time" type="time" />
+      <input id="end-time" type="time" />
+      <button class="btn-primary">Save</button>
+      <button onclick="closeModal('add-class-modal')">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Profile Modal -->
+  <div id="profile-modal" class="modal">
+    <div class="modal-content">
+      <h2>Edit Profile</h2>
+      <input id="edit-first-name" placeholder="First Name" />
+      <input id="edit-last-name" placeholder="Last Name" />
+      <input id="edit-email" placeholder="Email" />
+      <input id="edit-phone" placeholder="Phone" />
+      <input id="edit-address" placeholder="Address" />
+      <button class="btn-primary">Save</button>
+      <button onclick="closeModal('profile-modal')">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settings-modal" class="modal">
+    <div class="modal-content">
+      <h2>Settings</h2>
+      <label>Notification Time (minutes)</label>
+      <input id="notification-time" type="number" value="30" />
+      <label>Theme</label>
+      <select id="theme-select">
+        <option value="light">Light</option>
+        <option value="dark">Dark</option>
+      </select>
+      <button class="btn-primary">Save</button>
+      <button onclick="closeModal('settings-modal')">Cancel</button>
+    </div>
+  </div>
+
+  <!-- SCRIPT -->
+  <script>
+    /* Full frontend script from previous step goes here */
+    /* --- START --- */
+    const API = {
+      profile: '/api/profile',
+      classes: '/api/classes',
+      notifications: '/api/notifications',
+      settings: '/api/settings'
+    };
+
+    let studentProfile = null;
+    let classes = [];
+    let notifications = [];
+    let settings = { notificationTime: 30, theme: 'light' };
+
+    async function safeFetch(url, options = {}) {
+      try {
+        const res = await fetch(url, options);
+        if (!res.ok) throw new Error('Network response not ok');
+        const data = await res.json();
+        return { ok: true, data };
+      } catch (err) {
+        console.warn('Fetch failed:', url, err.message);
+        return { ok: false, error: err };
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      updateCurrentDate();
+      await loadInitialData();
+      attachUIHandlers();
+      renderAll();
+    });
+
+    function updateCurrentDate() {
+      const now = new Date();
+      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      document.getElementById('current-date').textContent = now.toLocaleDateString('en-US', options);
+    }
+
+    async function loadInitialData() {
+      const p = await safeFetch(API.profile);
+      studentProfile = p.ok ? p.data : JSON.parse(localStorage.getItem('profile') || '{}');
+      if (p.ok) localStorage.setItem('profile', JSON.stringify(studentProfile));
+
+      const c = await safeFetch(API.classes);
+      classes = c.ok ? c.data : JSON.parse(localStorage.getItem('classes') || '[]');
+      if (c.ok) localStorage.setItem('classes', JSON.stringify(classes));
+
+      const n = await safeFetch(API.notifications);
+      notifications = n.ok ? n.data : JSON.parse(localStorage.getItem('notifications') || '[]');
+      if (n.ok) localStorage.setItem('notifications', JSON.stringify(notifications));
+
+      const s = await safeFetch(API.settings);
+      settings = s.ok ? s.data : JSON.parse(localStorage.getItem('settings') || '{}');
+      if (s.ok) localStorage.setItem('settings', JSON.stringify(settings));
+    }
+
+    function attachUIHandlers() {
+      document.querySelector('#profile-modal .btn-primary').addEventListener('click', handleProfileUpdate);
+      document.querySelector('#add-class-modal .btn-primary').addEventListener('click', handleAddClass);
+      document.querySelector('#settings-modal .btn-primary').addEventListener('click', handleSaveSettings);
+    }
+
+    function renderAll() {
+      renderTodaysSchedule();
+      renderWeeklyCalendar();
+      renderCourseAttendance();
+      renderNotifications();
+      renderAchievements();
+      updateProfileDisplay();
+    }
+
+    function getTodaysClasses() {
+      const today = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+      return classes.filter(cls => cls.day === today);
+    }
+
+    function renderTodaysSchedule() {
+      const todaysClasses = getTodaysClasses();
+      const container = document.getElementById('todays-schedule');
+      if (!todaysClasses.length) {
+        container.innerHTML = `<p>No classes today</p>`;
+        return;
+      }
+      container.innerHTML = todaysClasses.map(cls => `
+        <div>${cls.courseName} (${cls.startTime} - ${cls.endTime})</div>
+      `).join('');
+    }
+
+    function renderWeeklyCalendar() {
+      const days = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
+      const container = document.getElementById('weekly-calendar');
+      container.innerHTML = days.map(day => {
+        const dayClasses = classes.filter(c => c.day === day.toLowerCase());
+        return `<div><strong>${day}:</strong> ${dayClasses.map(c => c.courseName).join(', ')}</div>`;
+      }).join('');
+    }
+
+    function renderCourseAttendance() {
+      document.getElementById('course-attendance').innerHTML =
+        classes.map(c => `<div>${c.courseName}: ${Math.floor(Math.random()*30+70)}%</div>`).join('');
+    }
+
+    function renderNotifications() {
+      document.getElementById('notifications-list').innerHTML =
+        notifications.slice(0,5).map(n => `<div>${n.title || 'Note'} - ${n.text || ''}</div>`).join('');
+    }
+
+    function renderAchievements() {
+      document.getElementById('achievements-list').innerHTML =
+        (studentProfile.achievements || []).map(a => `<div>${a}</div>`).join('');
+    }
+
+    function updateProfileDisplay() {
+      document.getElementById('header-student-name').textContent = studentProfile.firstName || '';
+      document.getElementById('profile-full-name').textContent = `${studentProfile.firstName || ''} ${studentProfile.lastName || ''}`;
+      document.getElementById('profile-grade').textContent = studentProfile.grade || '';
+      document.getElementById('profile-student-id').textContent = `ID: ${studentProfile.studentId || ''}`;
+      document.getElementById('profile-email').textContent = studentProfile.email || '';
+      document.getElementById('profile-phone').textContent = studentProfile.phone || '';
+      document.getElementById('profile-address').textContent = studentProfile.address || '';
+      document.getElementById('profile-gpa').textContent = studentProfile.gpa ?? '';
+      document.getElementById('profile-credits').textContent = studentProfile.totalCredits ?? '';
+    }
+
+    function openModal(id){ document.getElementById(id).classList.add('show'); }
+    function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+    function openAddClassModal(){ openModal('add-class-modal'); }
+    function openProfileModal(){ openModal('profile-modal'); }
+    function openSettingsModal(){ openModal('settings-modal'); }
+
+    async function handleAddClass() {
+      const newClass = {
+        courseName: document.getElementById('course-name').value,
+        instructor: document.getElementById('instructor').value,
+        location: document.getElementById('location').value,
+        day: document.getElementById('day').value,
+        startTime: document.getElementById('start-time').value,
+        endTime: document.getElementById('end-time').value,
+        color: '#' + Math.floor(Math.random()*16777215).toString(16)
+      };
+      const res = await safeFetch(API.classes, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newClass)
+      });
+      if (res.ok) {
+        classes.unshift(res.data);
+        localStorage.setItem('classes', JSON.stringify(classes));
+        closeModal('add-class-modal');
+        renderAll();
+      }
+    }
+
+    async function handleProfileUpdate() {
+      const payload = {
+        firstName: document.getElementById('edit-first-name').value,
+        lastName: document.getElementById('edit-last-name').value,
+        email: document.getElementById('edit-email').value,
+        phone: document.getElementById('edit-phone').value,
+        address: document.getElementById('edit-address').value
+      };
+      const res = await safeFetch(API.profile, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        studentProfile = res.data;
+        localStorage.setItem('profile', JSON.stringify(studentProfile));
+        closeModal('profile-modal');
+        renderAll();
+      }
+    }
+
+    async function handleSaveSettings() {
+      const payload = {
+        notificationTime: Number(document.getElementById('notification-time').value),
+        theme: document.getElementById('theme-select').value
+      };
+      const res = await safeFetch(API.settings, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        settings = res.data;
+        localStorage.setItem('settings', JSON.stringify(settings));
+        closeModal('settings-modal');
+      }
+    }
+
+    function markAttendance(){ alert('Attendance marked'); }
+    function viewReports(){ alert('Report generated'); }
+
+    window.addEventListener('click', e => { if (e.target.classList.contains('modal')) e.target.classList.remove('show'); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.modal.show').forEach(m => m.classList.remove('show')); });
+    /* --- END --- */
+  </script>
+</body>
+</html>

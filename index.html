@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Browser Meeting Recorder</title>
+<style>
+  :root{--bg1:#000000;--bg2:#0dc5b6;--glass:rgba(255,255,255,0.06)}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,Segoe UI,system-ui,Helvetica,Arial;background:linear-gradient(135deg,var(--bg1),var(--bg2));min-height:100vh;color:#fff;display:flex;flex-direction:column}
+  header{display:flex;justify-content:space-between;align-items:center;padding:12px 18px;background:rgba(0,0,0,.25);}
+  header h1{font-size:16px;margin:0}
+  .controls{display:flex;gap:10px;align-items:center}
+  button{background:rgba(255,255,255,.12);border:none;color:#fff;padding:10px 12px;border-radius:8px;cursor:pointer}
+  button.primary{background:linear-gradient(45deg,#ff4444,#ff6666)}
+  .container{display:flex;gap:16px;padding:16px;flex:1}
+  .left{flex:1;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+  .tile{background:#111;border-radius:10px;padding:6px;position:relative;aspect-ratio:16/9;overflow:hidden;border:1px solid rgba(255,255,255,.06)}
+  video{width:100%;height:100%;object-fit:cover;background:#222}
+  .badge{position:absolute;left:10px;bottom:10px;background:rgba(0,0,0,.6);padding:6px 10px;border-radius:999px;font-size:13px}
+  .right{width:320px;background:rgba(255,255,255,.95);color:#111;border-radius:10px;display:flex;flex-direction:column}
+  .right .header{padding:12px;font-weight:700;border-bottom:1px solid rgba(0,0,0,.08)}
+  .messages{padding:12px;overflow:auto;flex:1}
+  .msg{background:rgba(102,126,234,.08);padding:8px;border-radius:8px;margin-bottom:10px}
+  .footer{padding:12px;background:rgba(0,0,0,.15);display:flex;gap:8px;align-items:center;justify-content:center}
+  .timer{font-weight:700}
+  .download{display:inline-block;padding:8px 12px;border-radius:8px;background:linear-gradient(45deg,#667eea,#764ba2);color:#fff;text-decoration:none}
+  .small{font-size:13px;opacity:.9}
+  input.title{width:100%;padding:10px;border-radius:8px;border:none;outline:none;font-weight:700}
+  .hidden{display:none}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Attend Class</h1>
+    <div class="small" id="meetingId">Meeting ID: <strong>local-001</strong></div>
+  </div>
+  <div class="controls">
+    <div id="statusDot" style="width:10px;height:10px;border-radius:50%;background:#ff4444;display:none"></div>
+    <div id="timer" class="timer">00:00</div>
+    <button id="btnCamera">Start Camera</button>
+    <button id="btnScreen">Share Screen</button>
+    <button class="primary" id="btnRecord">Start Recording</button>
+  </div>
+</header>
+
+<div style="padding:14px">
+  <input class="title" id="lessonTitle" placeholder="Enter lesson title..." value="Mathematics - Algebra Basics">
+</div>
+
+<div class="container">
+  <div class="left">
+    <div class="tile">
+      <video id="cameraPreview" autoplay playsinline muted></video>
+      <div class="badge">Camera / Mic</div>
+    </div>
+    <div class="tile">
+      <video id="screenPreview" autoplay playsinline muted></video>
+      <div class="badge">Screen Share</div>
+    </div>
+    <div class="tile" id="composedPreviewTile" style="display:none">
+      <video id="composedPreview" autoplay playsinline muted></video>
+      <div class="badge">Recording Preview</div>
+    </div>
+  </div>
+
+  <div class="right">
+    <div class="header">Chat Messages</div>
+    <div id="chat" class="messages">
+      <div class="msg"><strong>System</strong>: Welcome — start camera or screen and record.</div>
+    </div>
+    <div style="padding:12px;border-top:1px solid rgba(0,0,0,.06)">
+      <button id="btnDownload" class="download hidden">Download Recording</button>
+      <div style="margin-top:8px" class="small">Note: For screen audio you need a browser that supports system audio capture (Chrome on desktop).</div>
+    </div>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="small">Local demo — serve via HTTPS or localhost</div>
+</footer>
+
+<script>
+/*
+  Browser Meeting Recorder
+  - cameraStream: user's camera + mic (getUserMedia)
+  - screenStream: screen capture (getDisplayMedia)
+  - composedStream: chosen video track + merged audio track (MediaStream from AudioContext destination)
+  - mediaRecorder records composedStream
+  - Saves to .webm (fallbacks handled)
+*/
+
+const btnCamera = document.getElementById('btnCamera');
+const btnScreen = document.getElementById('btnScreen');
+const btnRecord = document.getElementById('btnRecord');
+const btnDownload = document.getElementById('btnDownload');
+const cameraPreview = document.getElementById('cameraPreview');
+const screenPreview = document.getElementById('screenPreview');
+const composedPreviewTile = document.getElementById('composedPreviewTile');
+const composedPreview = document.getElementById('composedPreview');
+const statusDot = document.getElementById('statusDot');
+const timerEl = document.getElementById('timer');
+const chat = document.getElementById('chat');
+const lessonTitle = document.getElementById('lessonTitle');
+
+let cameraStream = null;
+let screenStream = null;
+let composedStream = null;
+let mediaRecorder = null;
+let recordedChunks = [];
+let recorderStartTime = null;
+let timerInterval = null;
+
+// Audio merging nodes
+let audioCtx = null;
+let audioDestination = null;
+let micSource = null;
+let screenAudioSource = null;
+
+function logMsg(sender, text){
+  const d = document.createElement('div');
+  d.className = 'msg';
+  d.innerHTML = `<strong>${sender}</strong>: ${text}`;
+  chat.appendChild(d);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+// CAMERA / MIC
+btnCamera.addEventListener('click', async () => {
+  if (!cameraStream) {
+    try {
+      cameraStream = await navigator.mediaDevices.getUserMedia({video: {width:1280}, audio: true});
+      cameraPreview.srcObject = cameraStream;
+      btnCamera.textContent = 'Stop Camera';
+      logMsg('System', 'Camera & microphone started.');
+    } catch (err) {
+      console.error('getUserMedia error', err);
+      logMsg('System', 'Camera/mic permission denied or not available: ' + (err.message || err));
+    }
+  } else {
+    // stop
+    cameraStream.getTracks().forEach(t => t.stop());
+    cameraStream = null;
+    cameraPreview.srcObject = null;
+    btnCamera.textContent = 'Start Camera';
+    logMsg('System', 'Camera stopped.');
+  }
+});
+
+// SCREEN SHARE
+btnScreen.addEventListener('click', async () => {
+  if (!screenStream) {
+    try {
+      // request display media; audio:true attempts to capture system audio where supported
+      screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+      screenPreview.srcObject = screenStream;
+      btnScreen.textContent = 'Stop Screen';
+      logMsg('System', 'Screen sharing started.');
+      // If track ended by user via browser UI, we must cleanup
+      const [vTrack] = screenStream.getVideoTracks();
+      if (vTrack) vTrack.addEventListener('ended', () => {
+        // emulate clicking stop
+        stopScreen();
+      });
+    } catch (err) {
+      console.error('getDisplayMedia error', err);
+      logMsg('System', 'Screen share permission denied or canceled.');
+      screenStream = null;
+    }
+  } else {
+    stopScreen();
+  }
+});
+
+function stopScreen(){
+  if (screenStream) {
+    screenStream.getTracks().forEach(t => t.stop());
+    screenStream = null;
+    screenPreview.srcObject = null;
+    btnScreen.textContent = 'Share Screen';
+    logMsg('System', 'Screen sharing stopped.');
+  }
+}
+
+// Build composed stream for recording: choose video track (screen preferred) + merged audio
+function buildComposedStream() {
+  if (composedStream) {
+    // stop previous composed tracks
+    composedStream.getTracks().forEach(t => t.stop());
+    composedStream = null;
+  }
+
+  // Choose video: prefer screen video, otherwise camera video
+  let videoTrack = null;
+  if (screenStream && screenStream.getVideoTracks().length) {
+    videoTrack = screenStream.getVideoTracks()[0];
+  } else if (cameraStream && cameraStream.getVideoTracks().length) {
+    videoTrack = cameraStream.getVideoTracks()[0];
+  }
+
+  // Setup audio merging with AudioContext -> MediaStreamDestination
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    audioDestination = audioCtx.createMediaStreamDestination();
+  } else {
+    // disconnect old nodes if any
+    try { micSource?.disconnect(); } catch(e){}
+    try { screenAudioSource?.disconnect(); } catch(e){}
+  }
+
+  // Create sources only if streams exist
+  if (cameraStream && cameraStream.getAudioTracks().length) {
+    micSource = audioCtx.createMediaStreamSource(cameraStream);
+    micSource.connect(audioDestination);
+  } else {
+    micSource = null;
+  }
+
+  // For screen audio track (if present)
+  if (screenStream && screenStream.getAudioTracks && screenStream.getAudioTracks().length) {
+    // Some browsers provide an audio track on the screen stream
+    screenAudioSource = audioCtx.createMediaStreamSource(screenStream);
+    screenAudioSource.connect(audioDestination);
+  } else {
+    screenAudioSource = null;
+  }
+
+  // Merge into a new MediaStream
+  const tracks = [];
+  if (videoTrack) tracks.push(videoTrack.clone ? videoTrack.clone() : videoTrack); // some browsers don't allow re-adding same track across streams; cloning safer if available
+  const audioTracks = audioDestination.stream.getAudioTracks();
+  for (const a of audioTracks) tracks.push(a);
+
+  composedStream = new MediaStream(tracks);
+
+  // show composed preview if desired
+  if ('srcObject' in composedPreview) {
+    composedPreview.srcObject = composedStream;
+    composedPreviewTile.style.display = 'block';
+  }
+  return composedStream;
+}
+
+function formatTime(seconds){
+  const m = String(Math.floor(seconds/60)).padStart(2,'0');
+  const s = String(seconds%60).padStart(2,'0');
+  return `${m}:${s}`;
+}
+
+// RECORDING
+btnRecord.addEventListener('click', async () => {
+  if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+    // Start recording
+    if ((!cameraStream || cameraStream.getTracks().length === 0) && (!screenStream || screenStream.getTracks().length === 0)) {
+      logMsg('System', 'No media available to record. Start camera or screen sharing first.');
+      return;
+    }
+
+    buildComposedStream();
+
+    // Prefer vp9; fallback to default if unsupported
+    let options = null;
+    try {
+      if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) options = {mimeType: 'video/webm;codecs=vp9'};
+      else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8')) options = {mimeType: 'video/webm;codecs=vp8'};
+      else if (MediaRecorder.isTypeSupported('video/webm')) options = {mimeType:'video/webm'};
+    } catch (e) {
+      // some older browsers may throw on isTypeSupported
+      options = {mimeType:'video/webm'};
+    }
+
+    try {
+      recordedChunks = [];
+      mediaRecorder = new MediaRecorder(composedStream, options);
+    } catch (e) {
+      console.error('MediaRecorder construction failed:', e);
+      logMsg('System', 'Recording not supported in this browser.');
+      return;
+    }
+
+    mediaRecorder.ondataavailable = (ev) => {
+      if (ev.data && ev.data.size > 0) recordedChunks.push(ev.data);
+    };
+
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(recordedChunks, {type: recordedChunks.length ? recordedChunks[0].type : 'video/webm'});
+      const url = URL.createObjectURL(blob);
+      btnDownload.classList.remove('hidden');
+      btnDownload.href = url;
+      btnDownload.download = `${(lessonTitle.value||'Lesson').replace(/[^\w\s-]/g,'').trim().replace(/\s+/g,'_')}_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.webm`;
+      logMsg('System', 'Recording ready to download.');
+      statusDot.style.display = 'none';
+      clearInterval(timerInterval);
+    };
+
+    mediaRecorder.onerror = (e) => {
+      console.error('Recorder error', e);
+      logMsg('System', 'Recording error: ' + (e.message || e));
+    };
+
+    mediaRecorder.start(1000); // collect each second
+    recorderStartTime = Date.now();
+    timerInterval = setInterval(() => {
+      const sec = Math.floor((Date.now() - recorderStartTime)/1000);
+      timerEl.textContent = formatTime(sec);
+    }, 1000);
+
+    btnRecord.textContent = 'Stop Recording';
+    statusDot.style.display = 'inline-block';
+    logMsg('System', 'Recording started.');
+  } else if (mediaRecorder && mediaRecorder.state === 'recording') {
+    // Stop
+    mediaRecorder.stop();
+    btnRecord.textContent = 'Start Recording';
+    logMsg('System', 'Recording stopped.');
+    // Do not revoke composed stream until save/download or manual cleanup
+  }
+});
+
+// allow download click to revoke object URL after click
+btnDownload.addEventListener('click', () => {
+  setTimeout(() => {
+    try {
+      URL.revokeObjectURL(btnDownload.href);
+      btnDownload.classList.add('hidden');
+      // optionally clean recorded chunks
+      recordedChunks = [];
+    } catch(e){}
+  }, 1000);
+});
+
+// Clean up on page unload
+window.addEventListener('beforeunload', () => {
+  try {
+    cameraStream?.getTracks()?.forEach(t=>t.stop());
+    screenStream?.getTracks()?.forEach(t=>t.stop());
+    composedStream?.getTracks()?.forEach(t=>t.stop());
+    audioDestination?.disconnect();
+    audioCtx?.close();
+  } catch(e){}
+});
+
+// Simple simulated chat messages for demo
+(function simulateChat(){
+  const msgs = [
+    ['Dr. Smith',"Let's begin with the fundamentals of algebra."],
+    ['John Doe',"Could you explain the quadratic formula?"],
+    ['Dr. Smith',"Of course! The quadratic formula is x = (-b ± √(b²-4ac)) / 2a"],
+    ['Jane Smith',"Thanks — helpful!"]
+  ];
+  let i=0;
+  setInterval(()=>{ if (i<msgs.length) { const m=msgs[i++]; logMsg(m[0], m[1]); } }, 9000);
+})();
+</script>
+</body>
+</html>

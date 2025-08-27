@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="Style/Style.css">
+    <title>Tshiamo Tutors - Student Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.1/lucide.min.css" rel="stylesheet">
+    <style>
+      
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div>
+                    <h1>Tshiamo Tutors</h1>
+                    <p class="header-subtitle">Student Dashboard</p>
+                </div>
+                <div class="header-right">
+                    <button button-type="backend" class="header-btn" title="button">
+                        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5V9a3 3 0 00-3-3H7a3 3 0 00-3 3v10l5-5h3z"/>
+                        </svg>
+                    </button>
+                    <button class="profile-btn" onclick="openProfileModal()">
+                        <img src="Images/Mr T.avif" alt="Mr T"
+                             alt="Profile" class="profile-avatar">
+                        <span id="header-student-name">Thabo</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <div class="dashboard">
+            <!-- Main Content -->
+            <div class="main-content">
+                <!-- Today's Schedule -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Today's Schedule</h2>
+                        <span id="current-date" class="schedule-time"></span>
+                    </div>
+                    <div id="todays-schedule">
+                        <!-- Dynamic content will be inserted here -->
+                    </div>
+
+                    <div>
+                        <button title="button" id="attend"><a href="index.html">Attend Class</a></button>
+                    </div>
+                </div>
+
+                <!-- Attendance Overview -->
+                <div class="card">
+                    <h2 class="card-title">Attendance Overview</h2>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-number" id="overall-attendance">92%</div>
+                            <div class="stat-label">Overall Attendance</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="classes-attended">47</div>
+                            <div class="stat-label">Classes Attended</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="classes-missed">4</div>
+                            <div class="stat-label">Classes Missed</div>
+                        </div>
+                    </div>
+                    <div id="course-attendance">
+                        <!-- Course attendance progress bars -->
+                    </div>
+                </div>
+
+                <!-- Weekly Calendar -->
+                <div class="card">
+                    <h2 class="card-title">Weekly Schedule</h2>
+                    <div class="calendar-grid" id="weekly-calendar">
+                        <!-- Calendar will be generated here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <!-- Profile Card -->
+                <div class="card profile-card">
+                    <img src="Images/Mr T.avif" alt="Thsiamo"
+                         alt="Profile" class="profile-image" id="profile-image">
+                    <h3 class="profile-name" id="profile-full-name">Tshiamo Peu</h3>
+                    <p class="profile-grade" id="profile-grade">Tutor</p>
+                    <p class="profile-id" id="profile-student-id"></p>
+                    
+                    <div class="profile-details">
+                        <div class="profile-detail">
+                            <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                            </svg>
+                            <span id="profile-email">Tshiamo@gmail.com</span>
+                        </div>
+                        <div class="profile-detail">
+                            <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                            </svg>
+                            <span id="profile-phone">+27 11 123 4567</span>
+                        </div>
+                        <div class="profile-detail">
+                            <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                            <span id="profile-address">Bloemfontein</span>
+                        </div>
+                    </div>
+
+                    <div class="profile-stats">
+                        <div>
+                            <div class="profile-stat-value" id="profile-gpa">3.8</div>
+                            <div class="profile-stat-label">GPA</div>
+                        </div>
+                        <div>
+                            <div class="profile-stat-value" id="profile-credits">45</div>
+                            <div class="profile-stat-label">Credits</div>
+                        </div>
+                    </div>
+
+                    <button class="edit-profile-btn" onclick="openProfileModal()">
+                        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                        </svg>
+                        Edit Profile
+                    </button>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="card">
+                    <h3 class="card-title">Quick Actions</h3>
+                    <div class="quick-actions">
+                        <button class="action-btn action-btn-primary" onclick="openAddClassModal()">
+                            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                            </svg>
+                            Add Class
+                        </button>
+                        <button class="action-btn action-btn-blue" onclick="markAttendance()">
+                            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            Mark Attendance
+                        </button>
+                        <button class="action-btn action-btn-purple" onclick="viewReports()">
+                            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                            </svg>
+                            View Reports
+                        </button>
+                        <button class="action-btn action-btn-gray" onclick="openSettingsModal()">
+                            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                            Settings
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Notifications -->
+                <div class="card">
+                    <h3 class="card-title">Recent Notifications</h3>
+                    <div id="notifications-list">
+                        <!-- Notifications will be inserted here -->
+                    </div>
+                </div>
+
+                <!-- Achievements -->
+                <div class="card">
+                    <h3 class="card-title">
+                        <svg class="icon icon-lg achievement-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 8px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
+                        </svg>
+                        Achievements
+                    </h3>
+                    <div class="achievements" id="achievements-list">
+                        <!-- Achievements will be inserted here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Class Modal -->
+    <div id="add-class-modal" class="modal">
+        <div class="modal-content">
+            <h2 class="modal-header">Add New Class</h2>
+            <div class="form-group">
+                <label class="form-label">Course Name</label>
+                <input type="text" id="course-name" class="form-input" required placeholder="Course">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Instructor</label>
+                <input type="text" id="instructor" class="form-input" required placeholder="Course">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Location</label>
+                <input type="text" id="location" class="form-input" required placeholder="Course">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Day</label>
+                <select id="day" class="form-select" required title="day">
+                    <option value="">Select Day</option>
+                    <option value="monday">Monday</option>
+                    <option value="tuesday">Tuesday</option>
+                    <option value="wednesday">Wednesday</option>
+                    <option value="thursday">Thursday</option>
+                    <option value="friday">Friday</option>
+                </select>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">Start Time</label>
+                    <input type="time" id="start-time" class="form-input" required placeholder="Course">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">End Time</label>
+                    <input type="time" id="end-time" class="form-input" required placeholder="Course">
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-primary" onclick="handleAddClass()">Add Class</button>
+                <button class="btn btn-secondary" onclick="closeModal('add-class-modal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Edit Modal -->
+    <div id="profile-modal" class="modal">
+        <div class="modal-content">
+            <h2 class="modal-header">Edit Profile</h2>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">First Name</label>
+                    <input type="text" id="edit-first-name" class="form-input" required placeholder="Course">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Last Name</label>
+                    <input type="text" id="edit-last-name" class="form-input" required placeholder="Course">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" id="edit-email" class="form-input" required placeholder="Course">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Phone</label>
+                <input type="tel" id="edit-phone" class="form-input" required placeholder="Course">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Address</label>
+                <textarea id="edit-address" class="form-textarea" rows="3" title="textbox"></textarea>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-primary" onclick="handleProfileUpdate()">Update Profile</button>
+                <button class="btn btn-secondary" onclick="closeModal('profile-modal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal">
+        <div class="modal-content">
+            <h2 class="modal-header">Settings</h2>
+            <div class="form-group">
+                <label class="form-label">Notification Preferences</label>
+                <select id="notification-time" class="form-select" title="select">
+                    <option value="15">15 minutes before class</option>
+                    <option value="30">30 minutes before class</option>
+                    <option value="60">1 hour before class</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Theme</label>
+                <select id="theme-select" class="form-select" title="select">
+                    <option value="light">Light</option>
+                    <option value="dark">Dark</option>
+                    <option value="auto">Auto</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-primary" onclick="handleSaveSettings()">Save Settings</button>
+                <button class="btn btn-secondary" onclick="closeModal('settings-modal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+     <script>
+         // Application State
+        let studentProfile = {
+            firstName: 'Tshiamo',
+            lastName: 'Peu',
+            email: 'Tshiamo@gmail.com',
+            phone: '+27 11 123 4567',
+            address: 'Bloemfontein',
+            studentId: '',
+            grade: 'Tutor',
+            gpa: 3.8,
+            totalCredits: 45,
+            subjects: ['Advanced Mathematics', 'Physical Sciences'],
+            achievements: ['']
+        };
+
+        let classes = [
+            {
+                
+            },
+            {
+               
+            },
+            {
+                
+            },
+            {
+                
+            }
+        ];
+
+        let notifications = [
+            {
+                
+            },
+            {
+                
+            },
+            {
+               
+            }
+        ];
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            updateCurrentDate();
+            renderTodaysSchedule();
+            renderWeeklyCalendar();
+            renderCourseAttendance();
+            renderNotifications();
+            renderAchievements();
+            updateProfileDisplay();
+        });
+
+        // Update current date
+        function updateCurrentDate() {
+            const now = new Date();
+            const options = { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            };
+            document.getElementById('current-date').textContent = now.toLocaleDateString('en-US', options);
+        }
+
+        // Get today's classes
+        function getTodaysClasses() {
+            const today = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+            return classes.filter(cls => cls.day === today);
+        }
+
+        // Render today's schedule
+        function renderTodaysSchedule() {
+            const todaysClasses = getTodaysClasses();
+            const container = document.getElementById('todays-schedule');
+            
+            if (todaysClasses.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <svg class="empty-icon" width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3a2 2 0 012-2h4a2 2 0 012 2v4m-4 8l-4-4m0 0l4-4m-4 4h12"/>
+                        </svg>
+                        <p>No classes scheduled for today</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = todaysClasses.map(cls => `
+                <div class="schedule-item">
+                    <div class="schedule-color" style="background-color: ${cls.color}"></div>
+                    <div class="schedule-details">
+                        <div style="display: flex; justify-content: space-between; align-items: start;">
+                            <div>
+                                <div class="schedule-name">${cls.courseName}</div>
+                                <div class="schedule-info">${cls.instructor} • ${cls.location}</div>
+                            </div>
+                            <div class="schedule-time">${cls.startTime} - ${cls.endTime}</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Render weekly calendar
+        function renderWeeklyCalendar() {
+            const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+            const container = document.getElementById('weekly-calendar');
+            
+            container.innerHTML = days.map(day => {
+                const dayClasses = classes.filter(cls => cls.day === day.toLowerCase());
+                return `
+                    <div class="calendar-day">
+                        <div class="calendar-day-name">${day}</div>
+                        ${dayClasses.map(cls => `
+                            <div class="calendar-event" style="background-color: ${cls.color}">
+                                <div style="font-size: 0.7rem;">${cls.startTime}</div>
+                                <div>${cls.courseName}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Render course attendance
+        function renderCourseAttendance() {
+            const container = document.getElementById('course-attendance');
+            
+            container.innerHTML = classes.map(cls => {
+                const attendanceRate = Math.floor(Math.random() * 30) + 70; // 70-100%
+                
+                return `
+                    <div style="margin-bottom: 20px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="font-weight: 600;">${cls.courseName}</span>
+                            <span style="font-weight: 600; color: #059669;">${attendanceRate}%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${attendanceRate}%;"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Render notifications
+        function renderNotifications() {
+            const container = document.getElementById('notifications-list');
+            
+            container.innerHTML = notifications.slice(0, 3).map(notif => `
+                <div class="notification">
+                    <div class="notification-title">${notif.title}</div>
+                    <div class="notification-text">${notif.text}</div>
+                    <div class="notification-time">${notif.time}</div>
+                </div>
+            `).join('');
+        }
+
+        // Render achievements
+        function renderAchievements() {
+            const container = document.getElementById('achievements-list');
+            
+            container.innerHTML = studentProfile.achievements.map(achievement => `
+                <div class="achievement-item">
+                    <svg class="icon-sm achievement-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
+                    </svg>
+                    <span>${achievement}</span>
+                </div>
+            `).join('');
+        }
+
+        // Update profile display
+        function updateProfileDisplay() {
+            document.getElementById('header-student-name').textContent = studentProfile.firstName;
+            document.getElementById('profile-full-name').textContent = `${studentProfile.firstName} ${studentProfile.lastName}`;
+            document.getElementById('profile-grade').textContent = studentProfile.grade;
+            document.getElementById('profile-student-id').textContent = `ID: ${studentProfile.studentId}`;
+            document.getElementById('profile-email').textContent = studentProfile.email;
+            document.getElementById('profile-phone').textContent = studentProfile.phone;
+            document.getElementById('profile-address').textContent = studentProfile.address;
+            document.getElementById('profile-gpa').textContent = studentProfile.gpa;
+            document.getElementById('profile-credits').textContent = studentProfile.totalCredits;
+        }
+
+        // Modal functions
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('show');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('show');
+        }
+
+        function openAddClassModal() {
+            openModal('add-class-modal');
+        }
+
+        function openProfileModal() {
+            // Populate form with current values
+            document.getElementById('edit-first-name').value = studentProfile.firstName;
+            document.getElementById('edit-last-name').value = studentProfile.lastName;
+            document.getElementById('edit-email').value = studentProfile.email;
+            document.getElementById('edit-phone').value = studentProfile.phone;
+            document.getElementById('edit-address').value = studentProfile.address;
+            
+            openModal('profile-modal');
+        }
+
+        function openSettingsModal() {
+            openModal('settings-modal');
+        }
+
+        // Handle add class
+        function handleAddClass() {
+            const courseName = document.getElementById('course-name').value;
+            const instructor = document.getElementById('instructor').value;
+            const location = document.getElementById('location').value;
+            const day = document.getElementById('day').value;
+            const startTime = document.getElementById('start-time').value;
+            const endTime = document.getElementById('end-time').value;
+
+            if (!courseName || !instructor || !location || !day || !startTime || !endTime) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            const newClass = {
+                id: classes.length + 1,
+                courseName,
+                instructor,
+                location,
+                day,
+                startTime,
+                endTime,
+                color: '#' + Math.floor(Math.random()*16777215).toString(16)
+            };
+
+            classes.push(newClass);
+            
+            // Clear form
+            document.getElementById('course-name').value = '';
+            document.getElementById('instructor').value = '';
+            document.getElementById('location').value = '';
+            document.getElementById('day').value = '';
+            document.getElementById('start-time').value = '';
+            document.getElementById('end-time').value = '';
+            
+            // Re-render components
+            renderTodaysSchedule();
+            renderWeeklyCalendar();
+            renderCourseAttendance();
+            
+            closeModal('add-class-modal');
+            showNotification('Class added successfully!', 'success');
+        }
+
+        // Handle profile update
+        function handleProfileUpdate() {
+            const firstName = document.getElementById('edit-first-name').value;
+            const lastName = document.getElementById('edit-last-name').value;
+            const email = document.getElementById('edit-email').value;
+            const phone = document.getElementById('edit-phone').value;
+            const address = document.getElementById('edit-address').value;
+
+            if (!firstName || !lastName || !email || !phone) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            studentProfile.firstName = firstName;
+            studentProfile.lastName = lastName;
+            studentProfile.email = email;
+            studentProfile.phone = phone;
+            studentProfile.address = address;
+
+            updateProfileDisplay();
+            closeModal('profile-modal');
+            showNotification('Profile updated successfully!', 'success');
+        }
+
+        // Handle save settings
+        function handleSaveSettings() {
+            const notificationTime = document.getElementById('notification-time').value;
+            const theme = document.getElementById('theme-select').value;
+            
+            // In a real app, these would be saved to backend/localStorage
+            console.log('Settings saved:', { notificationTime, theme });
+            
+            closeModal('settings-modal');
+            showNotification('Settings saved successfully!', 'success');
+        }
+
+        // Quick action functions
+        function markAttendance() {
+            showNotification('Attendance marked for current class!', 'success');
+        }
+
+        function viewReports() {
+            showNotification('Attendance report generated!', 'info');
+        }
+
+        // Show notification function
+        function showNotification(message, type) {
+            const newNotification = {
+                id: notifications.length + 1,
+                title: type === 'success' ? 'Success' : 'Info',
+                text: message,
+                type: type,
+                time: 'Just now'
+            };
+            
+            notifications.unshift(newNotification);
+            notifications = notifications.slice(0, 5); // Keep only last 5
+            
+            renderNotifications();
+        }
+
+        // Close modals when clicking outside
+        window.addEventListener('click', function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.classList.remove('show');
+            }
+        });
+
+        // Close modals with Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                const openModals = document.querySelectorAll('.modal.show');
+                openModals.forEach(modal => modal.classList.remove('show'));
+            }
+        });
+     </script>
+    
+    <script src="Style/dashboard.js"></script>
+</body>
+</html>
